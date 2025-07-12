@@ -8,7 +8,7 @@ template:
       jsonpath: "a.b.c|@store:cpu"
     -
       id: "ncpu"
-      jsonpath: "|@load:cpu|#"
+      jsonpath: "@load:cpu|#"
 
 -
   url: "/x/y/memory"
@@ -18,7 +18,7 @@ template:
       jsonpath: "a.b.c|@store:memory"
     -
       id: "nmemory"
-      jsonpath: "|@load:memory|#"
+      jsonpath: "@load:memory|#"
 
 
 -
