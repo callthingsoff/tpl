@@ -2,7 +2,7 @@ template:
 
 -
   url: "/a/b/cpu"
-  val:
+  group:
     -
       id: "cpu"
       jsonpath: "a.b.c|@store:cpu"
@@ -12,7 +12,7 @@ template:
 
 -
   url: "/x/y/memory"
-  val:
+  group:
     -
       id: "memory"
       jsonpath: "a.b.c|@store:memory"
@@ -23,7 +23,7 @@ template:
 
 -
   url: "/storage"
-  val:
+  group:
     -
       id: "storage"
       jsonpath: "storage|@url"

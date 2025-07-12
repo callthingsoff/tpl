@@ -6,14 +6,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Val struct {
+type Group struct {
 	ID       string `yaml:"id"`
 	JSONPath string `yaml:"jsonpath"`
 }
 
 type Item struct {
-	URL string `yaml:"url"`
-	Val []Val  `yaml:"val"`
+	URL   string  `yaml:"url"`
+	Group []Group `yaml:"group"`
 }
 type Template struct {
 	Template []Item

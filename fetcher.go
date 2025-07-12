@@ -53,7 +53,7 @@ func (f *Fetcher) Fetch(tpl *Template) (any, error) {
 		}
 
 		r := gjson.ParseBytes(b)
-		for _, x := range t.Val {
+		for _, x := range t.Group {
 			v := r.Get(x.JSONPath, f.opt, f.cacheB, f.cacheR)
 			if !v.Exists() {
 				return nil, fmt.Errorf("%q not found", x.JSONPath)
