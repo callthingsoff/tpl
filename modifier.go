@@ -6,11 +6,7 @@ import (
 	"github.com/callthingsoff/gjson"
 )
 
-var light gjson.Result
-
 func init() {
-	light = gjson.Parse(`{}`)
-
 	parseExtra := func(extra ...any) (*Option, *sync.Map, *sync.Map) {
 		if len(extra) != 3 {
 			return nil, nil, nil

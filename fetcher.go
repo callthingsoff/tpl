@@ -56,7 +56,7 @@ func (f *Fetcher) Fetch(tpl *Template) (any, error) {
 		for _, x := range t.Val {
 			v := r.Get(x.JSONPath, f.opt, f.cacheB, f.cacheR)
 			if !v.Exists() {
-				return nil, fmt.Errorf("%s does not exit", x.JSONPath)
+				return nil, fmt.Errorf("%q not found", x.JSONPath)
 			}
 			m[x.ID] = v.Value()
 		}

@@ -21,9 +21,6 @@ func TestXxx(t *testing.T) {
 	v1 = r.Get("a.b.c.#", cache).String()
 	fmt.Println(v1)
 
-	v2 := light.Get("|@load:arr|#", cache).String()
-	fmt.Println(v2)
-
 	tpl, err := ParseTemplate("tpl.yaml")
 	if err != nil {
 		log.Fatal(err)

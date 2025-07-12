@@ -1,6 +1,6 @@
 module tpl
 
-go 1.24.4
+go 1.23
 
 require (
 	github.com/callthingsoff/gjson v1.0.0 // indirect
