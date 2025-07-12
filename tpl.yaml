@@ -19,3 +19,12 @@ template:
     -
       id: "nmemory"
       jsonpath: "|@load:memory|#"
+
+
+-
+  url: "/storage"
+  val:
+    -
+      id: "storage"
+      jsonpath: "storage|@url"
+   

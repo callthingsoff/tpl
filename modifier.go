@@ -50,4 +50,18 @@ func init() {
 		}
 		return v.(string)
 	})
+
+	gjson.AddModifier("url", func(json, arg string, extra ...any) string {
+		opt, cacheB, _ := parseExtra(extra...)
+		if cacheB == nil {
+			return ""
+		}
+		r := gjson.Parse(json)
+
+		b, err := tryCacheOrSend(r.String(), opt, cacheB)
+		if err != nil {
+			return ""
+		}
+		return string(b)
+	})
 }
