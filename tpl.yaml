@@ -1,0 +1,21 @@
+template:
+
+-
+  url: "/a/b/cpu"
+  val:
+    -
+      id: "cpu"
+      jsonpath: "a.b.c|@store:cpu"
+    -
+      id: "ncpu"
+      jsonpath: "|@load:cpu|#"
+
+-
+  url: "/x/y/memory"
+  val:
+    -
+      id: "memory"
+      jsonpath: "a.b.c|@store:memory"
+    -
+      id: "nmemory"
+      jsonpath: "|@load:memory|#"
