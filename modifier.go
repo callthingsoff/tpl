@@ -19,7 +19,7 @@ func init() {
 
 	gjson.AddModifier("store", func(json, arg string, extra ...any) string {
 		f := parseExtra(extra...)
-		if f.cacheR == nil {
+		if f == nil || f.cacheR == nil {
 			return ""
 		}
 		f.cacheR.LoadOrStore(arg, json)
@@ -28,14 +28,15 @@ func init() {
 
 	gjson.AddModifier("load", func(json, arg string, extra ...any) string {
 		f := parseExtra(extra...)
-		if f.cacheR == nil {
+		if f == nil || f.cacheR == nil {
 			return ""
 		}
 		v, ok := f.cacheR.Load(arg)
 		if !ok {
 			return ""
 		}
-		return v.(string)
+		val, _ := v.(string)
+		return val
 	})
 
 	gjson.AddModifier("sum", func(json, arg string, extra ...any) string {
@@ -69,7 +70,7 @@ func init() {
 		}
 
 		f := parseExtra(extra...)
-		if f.cacheB == nil {
+		if f == nil || f.cacheB == nil {
 			return ""
 		}
 
@@ -87,7 +88,7 @@ func init() {
 		}
 
 		f := parseExtra(extra...)
-		if f.cacheB == nil {
+		if f == nil || f.cacheB == nil {
 			return ""
 		}
 

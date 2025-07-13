@@ -28,13 +28,13 @@ type Fetcher struct {
 }
 
 // NewFetcher creates a Fetcher by opt Option, if sendFunc
-// is nil, default send function will be used.
+// is nil, sendOrLog function will be used.
 func NewFetcher(opt *Option, sendFunc SendFunc) *Fetcher {
 	if opt == nil {
 		return nil
 	}
 	if sendFunc == nil {
-		sendFunc = send
+		sendFunc = sendOrLog
 	}
 	return &Fetcher{
 		opt:      opt,

@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"k8s.io/klog"
 )
 
 const defaultTimeoutSec = 10
@@ -45,6 +47,15 @@ func determineTimeout(sec int) time.Duration {
 		sec = defaultTimeoutSec
 	}
 	return time.Duration(sec) * time.Second
+}
+
+func sendOrLog(url string, opt *Option) ([]byte, error) {
+	b, err := send(url, opt)
+	if err != nil {
+		klog.Errorf("send failed: %v", err)
+		return nil, err
+	}
+	return b, nil
 }
 
 func send(url string, opt *Option) ([]byte, error) {
