@@ -5,20 +5,36 @@ template:
   group:
     -
       id: "cpu"
+      name: "CPU"
       jsonpath: "a.b.c|@store:cpu"
     -
       id: "ncpu"
+      name: "num-cpu"
       jsonpath: "@load:cpu|#"
+    -
+      id: "sumcpu"
+      name: "sum-cpu"
+      jsonpath: "@load:cpu|@sum"  
+    -
+      id: "sumdivcpu"
+      name: "sum-div-cpu"
+      jsonpath: "@load:cpu|@sum|@div:3"  
 
 -
   url: "/x/y/memory"
   group:
     -
       id: "memory"
+      name: "Memory"
       jsonpath: "a.b.c|@store:memory"
     -
       id: "nmemory"
+      name: "num-memory"
       jsonpath: "@load:memory|#"
+    -
+      id: "summemory"
+      name: "sum-memory"
+      jsonpath: "@load:memory|@sum"  
 
 
 -
@@ -26,5 +42,9 @@ template:
   group:
     -
       id: "storage"
+      name: "Storage"
       jsonpath: "storage|@url"
-   
+    -
+      id: "storages"
+      name: "Storages"
+      jsonpath: "storage|@url|@urls|#.s"   
