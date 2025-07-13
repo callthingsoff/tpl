@@ -20,8 +20,8 @@ type Option struct {
 type Fetcher struct {
 	opt *Option
 
-	CacheB *sync.Map
-	CacheR *sync.Map
+	cacheB *sync.Map
+	cacheR *sync.Map
 }
 
 func NewFetcher(opt *Option) *Fetcher {
@@ -33,8 +33,8 @@ func NewFetcher(opt *Option) *Fetcher {
 	}
 	return &Fetcher{
 		opt:    opt,
-		CacheB: new(sync.Map),
-		CacheR: new(sync.Map),
+		cacheB: new(sync.Map),
+		cacheR: new(sync.Map),
 	}
 }
 
@@ -45,14 +45,14 @@ func (f *Fetcher) Fetch(tpl *Template) (any, error) {
 
 	m := map[string]any{}
 	for _, t := range tpl.Template {
-		b, err := tryCacheOrSend(t.URL, f.opt, f.CacheB)
+		b, err := tryCacheOrSend(t.URL, f.opt, f.cacheB)
 		if err != nil {
 			return nil, err
 		}
 
 		r := gjson.ParseBytes(b)
 		for _, x := range t.Group {
-			v := r.Get(x.JSONPath, &Extra{Opt: f.opt, CacheB: f.CacheB, CacheR: f.CacheR})
+			v := r.Get(x.JSONPath, &extraType{opt: f.opt, cacheB: f.cacheB, cacheR: f.cacheR})
 			if !v.Exists() {
 				return nil, fmt.Errorf("%q not found", x.JSONPath)
 			}

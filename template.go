@@ -6,17 +6,17 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Group struct {
+type groupType struct {
 	ID       string `yaml:"id"`
 	JSONPath string `yaml:"jsonpath"`
 }
 
-type Item struct {
-	URL   string  `yaml:"url"`
-	Group []Group `yaml:"group"`
+type itemType struct {
+	URL   string      `yaml:"url"`
+	Group []groupType `yaml:"group"`
 }
 type Template struct {
-	Template []Item
+	Template []itemType
 }
 
 func ParseBytes(b []byte) (*Template, error) {

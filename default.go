@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var DefaultTimeoutSec = 10
+const defaultTimeoutSec = 10
 
 type SendFunc func(url string, opt *Option) ([]byte, error)
 
@@ -35,7 +35,7 @@ var hc = &http.Client{Transport: &http.Transport{
 
 func determineTimeout(sec int) time.Duration {
 	if sec <= 0 {
-		sec = DefaultTimeoutSec
+		sec = defaultTimeoutSec
 	}
 	return time.Duration(sec) * time.Second
 }
