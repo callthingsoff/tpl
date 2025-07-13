@@ -5,22 +5,25 @@ import (
 	"crypto/tls"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 )
 
 var DefaultTimeoutSec = 10
 
-func DefaultTryCacheOrSend(url string, opt *Option) ([]byte, error) {
+type SendFunc func(url string, opt *Option) ([]byte, error)
+
+func tryCacheOrSend(url string, opt *Option, cache *sync.Map) ([]byte, error) {
 	url = "http://" + opt.IP + url
-	v, ok := opt.CacheB.Load(url)
+	v, ok := cache.Load(url)
 	if ok {
 		return v.([]byte), nil
 	}
-	b, err := send(url, opt)
+	b, err := opt.SendFunc(url, opt)
 	if err != nil {
 		return nil, err
 	}
-	opt.CacheB.LoadOrStore(url, b)
+	cache.LoadOrStore(url, b)
 	return b, err
 }
 
@@ -45,6 +48,7 @@ func send(url string, opt *Option) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	req.SetBasicAuth(opt.User, opt.Password)
 
 	rsp, err := hc.Do(req)
 	if err != nil {

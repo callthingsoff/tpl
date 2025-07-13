@@ -1,6 +1,8 @@
 package tpl_test
 
 import (
+	"io"
+	"net/http"
 	"os"
 	"testing"
 
@@ -22,6 +24,14 @@ func TestRun(t *testing.T) {
 		User:       "x",
 		Password:   "y",
 		TimeoutSec: 3,
+		SendFunc: func(url string, opt *tpl.Option) ([]byte, error) {
+			rsp, err := http.Get(url)
+			if err != nil {
+				return nil, err
+			}
+			defer rsp.Body.Close()
+			return io.ReadAll(rsp.Body)
+		},
 	}).Fetch(template)
 	if err != nil {
 		t.Fatal(err)

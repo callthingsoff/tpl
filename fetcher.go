@@ -14,26 +14,27 @@ type Option struct {
 	Password   string `json:"password"`
 	TimeoutSec int    `json:"timeout"`
 
-	CacheB         *sync.Map                                     `json:"-"`
-	CacheR         *sync.Map                                     `json:"-"`
-	TryCacheOrSend func(url string, opt *Option) ([]byte, error) `json:"-"`
+	SendFunc SendFunc `json:"-"`
 }
 
 type Fetcher struct {
 	opt *Option
+
+	CacheB *sync.Map
+	CacheR *sync.Map
 }
 
 func NewFetcher(opt *Option) *Fetcher {
 	if opt == nil {
 		return nil
 	}
-	opt.CacheB = new(sync.Map)
-	opt.CacheR = new(sync.Map)
-	if opt.TryCacheOrSend == nil {
-		opt.TryCacheOrSend = DefaultTryCacheOrSend
+	if opt.SendFunc == nil {
+		opt.SendFunc = send
 	}
 	return &Fetcher{
-		opt: opt,
+		opt:    opt,
+		CacheB: new(sync.Map),
+		CacheR: new(sync.Map),
 	}
 }
 
@@ -44,14 +45,14 @@ func (f *Fetcher) Fetch(tpl *Template) (any, error) {
 
 	m := map[string]any{}
 	for _, t := range tpl.Template {
-		b, err := f.opt.TryCacheOrSend(t.URL, f.opt)
+		b, err := tryCacheOrSend(t.URL, f.opt, f.CacheB)
 		if err != nil {
 			return nil, err
 		}
 
 		r := gjson.ParseBytes(b)
 		for _, x := range t.Group {
-			v := r.Get(x.JSONPath, f.opt)
+			v := r.Get(x.JSONPath, &Extra{Opt: f.opt, CacheB: f.CacheB, CacheR: f.CacheR})
 			if !v.Exists() {
 				return nil, fmt.Errorf("%q not found", x.JSONPath)
 			}
