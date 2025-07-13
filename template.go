@@ -17,9 +17,9 @@ type itemType struct {
 	Group []groupType `yaml:"group"`
 }
 
-// Template describes resources in yaml.
+// Template holds resources in yaml.
 type Template struct {
-	Template []itemType
+	Items []itemType `yaml:"items"`
 }
 
 // ParseBytes parses bytes to Template.
@@ -31,7 +31,7 @@ func ParseBytes(b []byte) (*Template, error) {
 	return &out, nil
 }
 
-// ParseBytes parses yaml file to Template.
+// ParseFile parses file to Template.
 func ParseFile(filename string) (*Template, error) {
 	b, err := os.ReadFile(filename)
 	if err != nil {
