@@ -2,18 +2,27 @@ package tpl_test
 
 import (
 	"bytes"
+	"context"
+	"crypto/tls"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/callthingsoff/tpl"
 )
 
 func TestFetch(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if !strings.HasPrefix(auth, "Basic ") {
+			t.Fatalf("auth: %s is invalid", auth)
+			return
+		}
 		switch r.RequestURI {
 		case "/a/b/cpu":
 			w.Write([]byte(`{"a": {"b": {"c": [1,2,3]}}}`))
@@ -41,17 +50,31 @@ func TestFetch(t *testing.T) {
 		t.Fatal(err)
 	}
 	got, err := tpl.NewFetcher(&tpl.Option{
-		HTTPS:      false,
+		HTTPS:      true,
 		IP:         server.Listener.Addr().String(),
 		User:       "x",
 		Password:   "y",
 		TimeoutSec: 3,
 	}, func(url string, opt *tpl.Option) ([]byte, error) {
-		rsp, err := http.Get(url)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(opt.TimeoutSec)*time.Second)
+		defer cancel()
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.SetBasicAuth(opt.User, opt.Password)
+
+		rsp, err := (&http.Client{Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}}).Do(req)
 		if err != nil {
 			return nil, err
 		}
 		defer rsp.Body.Close()
+
 		return io.ReadAll(rsp.Body)
 	}).Fetch(template)
 	if err != nil {

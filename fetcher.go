@@ -14,7 +14,7 @@ type Option struct {
 	IP         string `json:"ip"`
 	User       string `json:"user"`
 	Password   string `json:"password"`
-	TimeoutSec int    `json:"timeout"`
+	TimeoutSec int    `json:"timeoutSec"`
 }
 
 // Fetcher holds context while fetching resources.
