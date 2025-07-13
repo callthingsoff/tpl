@@ -1,0 +1,56 @@
+package tpl
+
+import (
+	"context"
+	"crypto/tls"
+	"io"
+	"net/http"
+	"time"
+)
+
+var DefaultTimeoutSec = 10
+
+func DefaultTryCacheOrSend(url string, opt *Option) ([]byte, error) {
+	url = "http://" + opt.IP + url
+	v, ok := opt.CacheB.Load(url)
+	if ok {
+		return v.([]byte), nil
+	}
+	b, err := send(url, opt)
+	if err != nil {
+		return nil, err
+	}
+	opt.CacheB.LoadOrStore(url, b)
+	return b, err
+}
+
+var hc = &http.Client{Transport: &http.Transport{
+	TLSClientConfig: &tls.Config{
+		InsecureSkipVerify: true,
+	},
+}}
+
+func determineTimeout(sec int) time.Duration {
+	if sec <= 0 {
+		sec = DefaultTimeoutSec
+	}
+	return time.Duration(sec) * time.Second
+}
+
+func send(url string, opt *Option) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), determineTimeout(opt.TimeoutSec))
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	rsp, err := hc.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer rsp.Body.Close()
+
+	return io.ReadAll(rsp.Body)
+}

@@ -1,14 +1,9 @@
-package main
+package tpl
 
 import (
-	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"sync"
-	"time"
 
 	"github.com/callthingsoff/gjson"
 )
@@ -18,25 +13,27 @@ type Option struct {
 	User       string `json:"user"`
 	Password   string `json:"password"`
 	TimeoutSec int    `json:"timeout"`
+
+	CacheB         *sync.Map                                     `json:"-"`
+	CacheR         *sync.Map                                     `json:"-"`
+	TryCacheOrSend func(url string, opt *Option) ([]byte, error) `json:"-"`
 }
 
 type Fetcher struct {
-	opt    *Option
-	cacheB *sync.Map
-	cacheR *sync.Map
+	opt *Option
 }
 
 func NewFetcher(opt *Option) *Fetcher {
 	if opt == nil {
 		return nil
 	}
-	if opt.TimeoutSec <= 0 {
-		opt.TimeoutSec = 3
+	opt.CacheB = new(sync.Map)
+	opt.CacheR = new(sync.Map)
+	if opt.TryCacheOrSend == nil {
+		opt.TryCacheOrSend = DefaultTryCacheOrSend
 	}
 	return &Fetcher{
-		opt:    opt,
-		cacheB: new(sync.Map),
-		cacheR: new(sync.Map),
+		opt: opt,
 	}
 }
 
@@ -47,14 +44,14 @@ func (f *Fetcher) Fetch(tpl *Template) (any, error) {
 
 	m := map[string]any{}
 	for _, t := range tpl.Template {
-		b, err := tryCacheOrSend(t.URL, f.opt, f.cacheB)
+		b, err := f.opt.TryCacheOrSend(t.URL, f.opt)
 		if err != nil {
 			return nil, err
 		}
 
 		r := gjson.ParseBytes(b)
 		for _, x := range t.Group {
-			v := r.Get(x.JSONPath, f.opt, f.cacheB, f.cacheR)
+			v := r.Get(x.JSONPath, f.opt)
 			if !v.Exists() {
 				return nil, fmt.Errorf("%q not found", x.JSONPath)
 			}
@@ -62,42 +59,4 @@ func (f *Fetcher) Fetch(tpl *Template) (any, error) {
 		}
 	}
 	return m, nil
-}
-
-func tryCacheOrSend(url string, opt *Option, cacheB *sync.Map) ([]byte, error) {
-	url = "http://" + opt.IP + url
-	v, ok := cacheB.Load(url)
-	if ok {
-		return v.([]byte), nil
-	}
-	b, err := send(url, opt)
-	if err != nil {
-		return nil, err
-	}
-	cacheB.LoadOrStore(url, b)
-	return b, err
-}
-
-var hc = &http.Client{Transport: &http.Transport{
-	TLSClientConfig: &tls.Config{
-		InsecureSkipVerify: true,
-	},
-}}
-
-func send(url string, opt *Option) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(opt.TimeoutSec)*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	rsp, err := hc.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer rsp.Body.Close()
-
-	return io.ReadAll(rsp.Body)
 }

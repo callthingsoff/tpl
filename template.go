@@ -1,4 +1,4 @@
-package main
+package tpl
 
 import (
 	"os"
@@ -19,14 +19,18 @@ type Template struct {
 	Template []Item
 }
 
-func ParseTemplate(filename string) (*Template, error) {
-	f, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
+func ParseBytes(b []byte) (*Template, error) {
 	var out Template
-	if err = yaml.Unmarshal(f, &out); err != nil {
+	if err := yaml.Unmarshal(b, &out); err != nil {
 		return nil, err
 	}
 	return &out, nil
+}
+
+func ParseFile(filename string) (*Template, error) {
+	b, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBytes(b)
 }

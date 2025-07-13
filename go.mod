@@ -1,4 +1,4 @@
-module tpl
+module github.com/callthingsoff/tpl
 
 go 1.23
 

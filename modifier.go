@@ -1,46 +1,33 @@
-package main
+package tpl
 
 import (
-	"sync"
-
 	"github.com/callthingsoff/gjson"
 )
 
 func init() {
-	parseExtra := func(extra ...any) (*Option, *sync.Map, *sync.Map) {
-		if len(extra) != 3 {
-			return nil, nil, nil
+	parseExtra := func(extra ...any) *Option {
+		if len(extra) != 1 {
+			return nil
 		}
-		opt, ok := extra[0].(*Option)
-		if !ok {
-			return nil, nil, nil
-		}
-		cacheB, ok := extra[1].(*sync.Map)
-		if !ok {
-			return nil, nil, nil
-		}
-		cacheR, ok := extra[2].(*sync.Map)
-		if !ok {
-			return nil, nil, nil
-		}
-		return opt, cacheB, cacheR
+		e, _ := extra[0].(*Option)
+		return e
 	}
 
 	gjson.AddModifier("store", func(json, arg string, extra ...any) string {
-		_, _, cacheR := parseExtra(extra...)
-		if cacheR == nil {
+		opt := parseExtra(extra...)
+		if opt.CacheR == nil {
 			return ""
 		}
-		cacheR.LoadOrStore(arg, json)
+		opt.CacheR.LoadOrStore(arg, json)
 		return json
 	})
 
 	gjson.AddModifier("load", func(json, arg string, extra ...any) string {
-		_, _, cacheR := parseExtra(extra...)
-		if cacheR == nil {
+		opt := parseExtra(extra...)
+		if opt.CacheR == nil {
 			return ""
 		}
-		v, ok := cacheR.Load(arg)
+		v, ok := opt.CacheR.Load(arg)
 		if !ok {
 			return ""
 		}
@@ -48,13 +35,13 @@ func init() {
 	})
 
 	gjson.AddModifier("url", func(json, arg string, extra ...any) string {
-		opt, cacheB, _ := parseExtra(extra...)
-		if cacheB == nil {
+		opt := parseExtra(extra...)
+		if opt.CacheR == nil {
 			return ""
 		}
 		r := gjson.Parse(json)
 
-		b, err := tryCacheOrSend(r.String(), opt, cacheB)
+		b, err := opt.TryCacheOrSend(r.String(), opt)
 		if err != nil {
 			return ""
 		}
