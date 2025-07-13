@@ -1,7 +1,9 @@
 package tpl
 
 import (
+	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/callthingsoff/gjson"
 )
@@ -36,24 +38,6 @@ func init() {
 		return v.(string)
 	})
 
-	gjson.AddModifier("url", func(json, arg string, extra ...any) string {
-		r := gjson.Parse(json)
-		if !r.Exists() {
-			return ""
-		}
-
-		f := parseExtra(extra...)
-		if f.cacheR == nil || f.cacheB == nil {
-			return ""
-		}
-
-		b, err := tryCacheOrSend(r.String(), f.opt, f.cacheB, f.sendFunc)
-		if err != nil {
-			return ""
-		}
-		return string(b)
-	})
-
 	gjson.AddModifier("sum", func(json, arg string, extra ...any) string {
 		r := gjson.Parse(json)
 		if !r.IsArray() {
@@ -78,6 +62,24 @@ func init() {
 		return fmt.Sprintf("%d", v)
 	})
 
+	gjson.AddModifier("url", func(json, arg string, extra ...any) string {
+		r := gjson.Parse(json)
+		if !r.Exists() {
+			return ""
+		}
+
+		f := parseExtra(extra...)
+		if f.cacheB == nil {
+			return ""
+		}
+
+		b, err := tryCacheOrSend(r.String(), f.opt, f.cacheB, f.sendFunc)
+		if err != nil {
+			return ""
+		}
+		return string(b)
+	})
+
 	gjson.AddModifier("urls", func(json, arg string, extra ...any) string {
 		r := gjson.Parse(json)
 		if !r.IsArray() {
@@ -85,20 +87,59 @@ func init() {
 		}
 
 		f := parseExtra(extra...)
-		if f.cacheR == nil || f.cacheB == nil {
+		if f.cacheB == nil {
 			return ""
 		}
 
-		bs := []byte("[")
-		for _, x := range r.Array() {
-			b, err := tryCacheOrSend(x.String(), f.opt, f.cacheB, f.sendFunc)
-			if err != nil {
-				return ""
-			}
-			bs = append(bs, b...)
-			bs = append(bs, ',')
+		if arg == "async" {
+			return asyncSend(f, r.Array())
 		}
-		bs = append(bs, ']')
-		return string(bs)
+		return syncSend(f, r.Array())
 	})
+
+}
+
+func syncSend(f *Fetcher, arr []gjson.Result) string {
+	bs := []byte("[")
+	for _, x := range arr {
+		b, err := tryCacheOrSend(x.String(), f.opt, f.cacheB, f.sendFunc)
+		if err != nil {
+			return ""
+		}
+		bs = append(bs, b...)
+		bs = append(bs, ',')
+	}
+	bs = append(bs, ']')
+	return string(bs)
+}
+
+func asyncSend(f *Fetcher, arr []gjson.Result) string {
+	vs := make([][]byte, len(arr))
+	errs := make([]error, len(arr))
+
+	var wg sync.WaitGroup
+	for i, x := range arr {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			b, err := tryCacheOrSend(x.String(), f.opt, f.cacheB, f.sendFunc)
+			vs[i] = b
+			errs[i] = err
+		}()
+	}
+
+	wg.Wait()
+
+	if err := errors.Join(errs...); err != nil {
+		return ""
+	}
+
+	bs := []byte("[")
+	for _, b := range vs {
+		bs = append(bs, b...)
+		bs = append(bs, ',')
+	}
+	bs = append(bs, ']')
+	return string(bs)
 }

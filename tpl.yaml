@@ -47,4 +47,4 @@ template:
     -
       id: "storages"
       name: "Storages"
-      jsonpath: "storage|@url|@urls|#.s"   
+      jsonpath: "storage|@url|@urls:async|#.s"   
