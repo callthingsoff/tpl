@@ -45,25 +45,25 @@ func NewFetcher(opt *Option, sendFunc SendFunc) *Fetcher {
 }
 
 // Fetch fetches all the resources from tpl, and reports an error if failed.
-func (f *Fetcher) Fetch(tpl *Template) (any, error) {
+func (f *Fetcher) Fetch(tpl Tpler) (any, error) {
 	if tpl == nil {
 		return nil, errors.New("nil Template")
 	}
 
 	m := map[string]any{}
-	for _, it := range tpl.Items {
-		b, err := tryCacheOrSend(it.URL, f.opt, f.cacheB, f.sendFunc)
+	for it := range tpl.GetItems() {
+		b, err := tryCacheOrSend(it.GetURL(), f.opt, f.cacheB, f.sendFunc)
 		if err != nil {
 			return nil, err
 		}
 
 		r := gjson.ParseBytes(b)
-		for _, x := range it.Group {
-			v := r.Get(x.JSONPath, f)
+		for x := range it.GetGroup() {
+			v := r.Get(x.GetJSONPath(), f)
 			if !v.Exists() {
-				return nil, fmt.Errorf("%q: %q, not found in %q", x.ID, x.Name, x.JSONPath)
+				return nil, fmt.Errorf("%q: %q, not found in %q", x.GetID(), x.GetName(), x.GetJSONPath())
 			}
-			m[x.ID] = v.Value()
+			m[x.GetID()] = v.Value()
 		}
 	}
 	return m, nil
