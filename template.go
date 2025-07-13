@@ -15,6 +15,8 @@ type itemType struct {
 	URL   string      `yaml:"url"`
 	Group []groupType `yaml:"group"`
 }
+
+// Template describes resources in yaml.
 type Template struct {
 	Template []itemType
 }

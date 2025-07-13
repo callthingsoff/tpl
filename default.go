@@ -11,15 +11,22 @@ import (
 
 const defaultTimeoutSec = 10
 
+// SendFunc is function to send http request, and get response.
 type SendFunc func(url string, opt *Option) ([]byte, error)
 
-func tryCacheOrSend(url string, opt *Option, cache *sync.Map) ([]byte, error) {
-	url = "http://" + opt.IP + url
+func tryCacheOrSend(url string, opt *Option, cache *sync.Map, sendFunc SendFunc) ([]byte, error) {
+	var prefix string
+	if opt.HTTPS {
+		prefix = "https://"
+	} else {
+		prefix = "http://"
+	}
+	url = prefix + opt.IP + url
 	v, ok := cache.Load(url)
 	if ok {
 		return v.([]byte), nil
 	}
-	b, err := opt.SendFunc(url, opt)
+	b, err := sendFunc(url, opt)
 	if err != nil {
 		return nil, err
 	}
